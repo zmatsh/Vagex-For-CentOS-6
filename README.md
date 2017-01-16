@@ -153,4 +153,4 @@ cd /root/.vnc;du -sh ./*;rm -fr *.log
 
   [1]: http://ftp-idc.pconline.com.cn/1eb24933b3763e1914dfd39001c8e196/pub/download/201010/VNC-5.3.2-Windows.exe
   [2]: http://jingyan.baidu.com/article/11c17a2c7f656af446e39def.html
-  [3]: http://vagex.com/?ref=388497
+  [3]: http://vagex.com/?ref=389929
