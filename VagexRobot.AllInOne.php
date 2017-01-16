@@ -136,6 +136,7 @@ class VagexRobot {
      */
     function update_video_arr() {
         Log::info('Requesting new Show Array.');
+        Log::info('Post UserId:'.$this->data_default['userid'].' ua:'$this->data_default['ua'].' build:'.$this->data_default['build'].' versid:'.$this->data_default['versid']);
         $resp = Curl::post(self::VAGEX_URL_A, http_build_query(array(
             'userid' => $this->data_default['userid'],
             'ua' => $this->data_default['ua'],
