@@ -13,8 +13,8 @@ if (PHP_SAPI !== 'cli') {
     die ("This is CLI only version!");
 } else {
     $v = new VagexRobot();
-    $v->set_userid('388497');
-    $v->set_youtube_email('liyuan.leon@gmail.com');
+    $v->set_userid('389929');
+    $v->set_youtube_email('wang.charlie2@gmail.com');
 
     //下面这个方法可以手工指定youtube用户名，官方限制最多10个用户名还限了喜欢和收藏的数量
     //程序原本设计会自动随机生成一个用户名，有时候如果程序死掉重启什么的，会导致使用了很多新的用户名，超出限制
