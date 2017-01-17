@@ -15,7 +15,7 @@ do
 
 	if [[ $t -gt $XX ]]; then
 		echo "t > xx";
-		killall -9 firefox;
+		pkill -9 firefox;
 		sleep 1;
 		firefox &> /dev/null &
 		t=0;
