@@ -8,28 +8,23 @@
 date_default_timezone_set('Asia/Shanghai');
 define('DEFAULT_UA', 'Mozilla/5.0 (Windows NT 6.1; rv:25.0) Gecko/20100101 Firefox/25.0');
 //Log::setMinOutputLevel(Log::LEVEL_TRACE); //出问题的时候可以去掉本行注释观察调试跟踪数据
-
 if (PHP_SAPI !== 'cli') {
     die ("This is CLI only version!");
 } else {
     $v = new VagexRobot();
-    $v->set_userid('389929');
-    $v->set_youtube_email('wang.charlie2@gmail.com');
-
+    $v->set_userid('240907');
+    $v->set_youtube_email('horsley.bot@gmail.com');
     //下面这个方法可以手工指定youtube用户名，官方限制最多10个用户名还限了喜欢和收藏的数量
     //程序原本设计会自动随机生成一个用户名，有时候如果程序死掉重启什么的，会导致使用了很多新的用户名，超出限制
     //这时候可以用下面这个手工指定用户名的方式重用那些还没到限制的用户名
-    //$v->set_youtube_username('Leonn');
-
+    //$v->set_youtube_username('abcdefg');
     //国内环境需要挂代理才能正确取得youtube信息，注意这个代理设置是全局的，也被用在vagex提交和获取
     //$v->set_proxy('127.0.0.1:8888', false);
-
     //国内环境想要正确取得youtube信息也可以考虑使用china mode，即：
     //部署一个小脚本video_info.php 到国外的sass pass 虚拟主机 等，专门用于获取youtube信息
     //$v->set_youtube_proxy('http://abc.com/video_info.php');
     $v->run();
 }
-
 /**
  * Class VagexRobot
  */
@@ -37,7 +32,6 @@ class VagexRobot {
     const VAGEX_URL_A = 'http://vagex.com/ffupdater151a.php';
     const VAGEX_URL_B = 'http://vagex.com/ffupdater151b.php';
     const VAGEX_URL_E = 'http://vagex.com/ffupdater151e.php';
-
     const VAGEX_SPR_SID = 'SID:::|';
     const VAGEX_SPR_EOF = ':::<br>';
     const VAGEX_SPR_EOL = '::||::<br>';
@@ -45,7 +39,6 @@ class VagexRobot {
     const VAGEX_SPR_FLD = '|:|';
     const VAGEX_RE_ERR = '/\:\|(.*?)\|\:/';
     const VAGEX_RE_EAR = '/\:\:\|\|(.*?)\|\|\:\:/';
-
     private $sleep_time;
     private $data_default = array(
         'userid'        => '0',
@@ -61,33 +54,26 @@ class VagexRobot {
         'flash'         => 'true',
         'html5'         => 'true'
     );
-
     private $data_dynamic = array();
-
     function __construct() {
         Log::info("Vagex Cheater instance initialized");
     }
-
     function set_userid($uid) {
         $this->data_default['userid'] = $uid;
         Log::info("Set user id: " . $uid);
     }
-
     function set_proxy($proxy, $is_sock5 = false) {
         Curl::setProxy($proxy, $is_sock5);
         Log::info("Set proxy: " . ($is_sock5?'sock5://':'') . $proxy );
     }
-
     function set_youtube_email($email) {
         $this->data_default['email'] = $email;
         Log::info("Set youtube email: " . $email);
     }
-
     function set_youtube_username($name) {
         $this->data_default['username'] = $name;
         Log::info("Set youtube username: " . $name);
     }
-
     /**
      * china mode
      * 设置一个代理用于获取youtube信息，使得本robot可以在国内运行
@@ -96,7 +82,6 @@ class VagexRobot {
         $this->data_default['youtube_proxy'] = $url;
         Log::info("Set youtube proxy: " . $url . ' (China Mode)');
     }
-
     function run() {
         Log::info('Start to run main routine');
         while(true) {
@@ -105,14 +90,12 @@ class VagexRobot {
                 foreach($this->data_dynamic['video_arr'] as $vc_item) {
                     Log::info('Deal with item:' . $vc_item[1][0]);
                     Log::debug(json_encode($vc_item));
-
                     //sleep time 官方测算应该是随机在5~20硬延迟（不算小的几百毫秒的延迟执行和代码运行时间、页面加载时间
                     //这里人为适度降延迟上限，得分更快，但是下限不敢乱动，因为太快官方是会不认的
                     $this->sleep_time = intval($vc_item[1][1]) + mt_rand(5, 7);
                     Log::info('Let\'s sleep for ' . $this->sleep_time . ' seconds');
                     sleep($this->sleep_time);
                     Log::info('Wake up, report processed');
-
                     if($result = $this->report_processed($vc_item[0])) {
                         if (strlen($result) < 2) {
                             Log::info('Earnt: ' . $result);
@@ -129,36 +112,30 @@ class VagexRobot {
             }
         }
     }
-
     /**
      * get video items
      * @return bool
      */
     function update_video_arr() {
         Log::info('Requesting new Show Array.');
-        Log::info('Post UserId:'.$this->data_default['userid'].' ua:'$this->data_default['ua'].' build:'.$this->data_default['build'].' versid:'.$this->data_default['versid']);
         $resp = Curl::post(self::VAGEX_URL_A, http_build_query(array(
             'userid' => $this->data_default['userid'],
             'ua' => $this->data_default['ua'],
             'build' => $this->data_default['build'],
             'versid' => $this->data_default['versid']
         )));
-
         $_ = explode(self::VAGEX_SPR_SID, $resp);
         if (count($_) != 2) {
             Log::error("Cut Show Array Failed");
             Log::debug($resp);
             return false;
         }
-
         Log::info('Show Array Request Data Received...');
-
         $this->data_dynamic['sid'] = array_shift(explode(self::VAGEX_SPR_EOF, $_[1]));
         $this->data_dynamic['video_arr'] = explode(self::VAGEX_SPR_EOL, $_[0]);
         if (empty($this->data_dynamic['video_arr'][count($this->data_dynamic['video_arr']) - 1])) {
             unset($this->data_dynamic['video_arr'][count($this->data_dynamic['video_arr']) - 1]);
         }
-
         foreach($this->data_dynamic['video_arr'] as &$v) {
             if (empty($v)) continue;
             $e = explode(self::VAGEX_SPR_VNO, $v); //$e[0] = video_no
@@ -168,7 +145,6 @@ class VagexRobot {
         Log::info('Show Array parse end, array count: ' . count($this->data_dynamic['video_arr']));
         return true;
     }
-
     /**
      * report process
      * @param $video_no
@@ -179,7 +155,6 @@ class VagexRobot {
         $PostData = $this->make_report_data($video_no);
         $PostDataStr = base64_encode(http_build_query($PostData));
         Log::debug('postData:'.$PostDataStr);
-
         if ($response_body = Curl::post(self::VAGEX_URL_B, http_build_query(array('data' => $PostDataStr)))) {
             //提取错误信息
             preg_match(self::VAGEX_RE_ERR, $response_body, $match);
@@ -191,7 +166,6 @@ class VagexRobot {
                     $this->generate_random_ytusername();
                 }
             }
-
             //提取赚取点数信息
             preg_match(self::VAGEX_RE_EAR, $response_body, $match);
             return isset($match[1])?$match[1]:false;
@@ -200,7 +174,6 @@ class VagexRobot {
             return false;
         }
     }
-
     /**
      * Wrap all data that need to post
      * @param $video_no
@@ -210,7 +183,6 @@ class VagexRobot {
         Log::trace('make_report_data start');
         $this->get_dynamic_data($video_no); //视频相关的动态数据获取
         $this->make_fake_data();            //各种随机瞎编数据的生成
-
         return array( //这里的顺序按照官方来
             'userid'        => $this->data_default['userid'],
             'versid'        => $this->data_default['versid'],
@@ -240,7 +212,6 @@ class VagexRobot {
             'ts'            => urlencode($this->data_dynamic['ts']),
         );
     }
-
     /**
      * get dynamic data from play page
      * @param $video_no
@@ -265,7 +236,6 @@ class VagexRobot {
             }
         } else {
             $play_page_body = Curl::get($this->get_video_url($video_no), $play_page_header);
-
             $this->data_dynamic['watcheduser'] = self::get_watched_userid($play_page_body);
             $this->data_dynamic['pageData'] = self::get_page_title($play_page_body);
             if (empty($this->data_dynamic['machine'])) {
@@ -274,16 +244,13 @@ class VagexRobot {
             }
             $this->data_dynamic['exactTime'] = self::get_video_length($play_page_body);
         }
-
         $this->data_dynamic['url'] = $this->data_dynamic['video_arr'][$video_no][1][0];
         $this->data_dynamic['liked'] = $this->data_dynamic['video_arr'][$video_no][1][3];
         $this->data_dynamic['subed'] = $this->data_dynamic['video_arr'][$video_no][1][4];
         $this->data_dynamic['siteid'] = $this->data_dynamic['video_arr'][$video_no][1][2];
-
         $this->data_dynamic['nv'] = $video_no;
         $this->data_dynamic['nc'] = !isset($this->data_dynamic['nc']) ? 0 : ($this->data_dynamic['nc']+1);
     }
-
     /**
      * Make fake data base on random numbers or previous data
      */
@@ -292,34 +259,28 @@ class VagexRobot {
         $this->data_dynamic['speed']        = mt_rand(140000, 200000) + lcg_value();
         $this->data_dynamic['length']       = $this->sleep_time + mt_rand(1, 2);
         $this->data_dynamic['currTime']     = $this->sleep_time + mt_rand(1, 2);
-
         if ($this->data_default['username'] == 'username_catching_error') $this->generate_random_ytusername();
-
         //下面这些速度监控相关的 都是随机瞎编的数据，根据多次测量的经验取值范围
         $new_speed = mt_rand(60, 69) + lcg_value();
         if (!isset($this->data_dynamic['min_speed']) || $new_speed < $this->data_dynamic['min_speed']) {
             $this->data_dynamic['min_speed'] = $new_speed;
         }
-
         $new_speed = mt_rand(250000, 470000) + lcg_value();
         if (!isset($this->data_dynamic['max_speed']) || $new_speed > $this->data_dynamic['max_speed']) {
             $this->data_dynamic['max_speed'] = $new_speed;
         }
-
         $rand_time = array(
             mt_rand(ceil($this->data_dynamic['min_speed']), floor($this->data_dynamic['max_speed'])) + lcg_value(),
             mt_rand(9000, 18200) + lcg_value(),
             mt_rand(16000, 21000) + lcg_value(),
             mt_rand(55000, 90000) + lcg_value(),
         );
-
         $this->data_dynamic['ts'] = sprintf('%f:%f:%f:%f:%f:%f',
             $this->data_dynamic['min_speed'],
             $this->data_dynamic['max_speed'],
             $rand_time[0], $rand_time[1], $rand_time[2], $rand_time[3]
         );
     }
-
     /**
      * 随机生成一个youtube 用户名
      * using default username or catching error leads to like and sub not counting!!
@@ -333,7 +294,6 @@ class VagexRobot {
         $this->data_default['username'] = $randomString;
         Log::info('generate_random_ytusername:'.$randomString);
     }
-
     /**
      * make full youtube url by vid
      * @param $video_no
@@ -342,7 +302,6 @@ class VagexRobot {
     function get_video_url($video_no) {
         return 'http://www.youtube.com/watch?v=' . $this->get_vid($video_no);
     }
-
     /**
      * Get Show item's youtube vid
      * @param $video_no
@@ -351,7 +310,6 @@ class VagexRobot {
     function get_vid($video_no) {
         return $this->data_dynamic['video_arr'][$video_no][1][0];
     }
-
     /**
      * Preg find page title from html
      * @param $html
@@ -361,7 +319,6 @@ class VagexRobot {
         preg_match('/<title>(.*?)<\/title>/', $html, $match);
         return isset($match[1])?$match[1]:false;
     }
-
     /**
      * Preg Youtube visitor id from response cookie
      * @param $head
@@ -371,7 +328,6 @@ class VagexRobot {
         preg_match('/VISITOR_INFO1_LIVE=(.*?);/', $head, $match);
         return isset($match[1])?$match[1]:false;
     }
-
     /**
      * Preg Youtube video owner id from html
      * @param $html
@@ -381,7 +337,6 @@ class VagexRobot {
         preg_match('/yt-uix-sessionlink yt-user-videos.*\/user\/(.*?)\//', $html, $match);
         return isset($match[1])?$match[1]:false;
     }
-
     /**
      * Preg Youtube video duration
      * @param $html
@@ -391,12 +346,10 @@ class VagexRobot {
         preg_match('/"length_seconds":=\s+(\d+),/', $html, $match);
         return isset($match[1])?$match[1]:false;
     }
-
 }
 /////////////////////////////////////////////////////////////////////////////////
 class Curl {
     private static $_opt = array();
-
     /**
      * 简单的get请求
      * @param $url
@@ -418,11 +371,8 @@ class Curl {
         $rsp_body = $response[1]; //返回Body
         $header = $response[0];
         curl_close($ch);
-
         return $rsp_body;
     }
-
-
     /**
      * 简单的post提交
      * @param $url
@@ -444,7 +394,6 @@ class Curl {
         curl_close($ch);
         return $response;
     }
-
     /**
      * 代理设置
      * @param $proxy_str
@@ -468,9 +417,7 @@ class Log {
     const LEVEL_WARN  = 4;
     const LEVEL_ERROR = 5;
     const LEVEL_FATAL = 6;
-
     const TIME_FORMAT = '[Y/m/d H:i:s] ';
-
     private static $level_pfx = array(
         self::LEVEL_TRACE => '[TRACE] ',
         self::LEVEL_DEBUG => '[DEBUG] ',
@@ -479,9 +426,7 @@ class Log {
         self::LEVEL_ERROR => '[ERROR] ',
         self::LEVEL_FATAL => '[FATAL] ',
     );
-
     private static $min_output_level = self::LEVEL_INFO;
-
     private static function write($content, $level) {
         if ($level < self::$min_output_level) return; //等级不够不输出
         $log_line = date(self::TIME_FORMAT);
@@ -489,7 +434,6 @@ class Log {
         $log_line .= $content.PHP_EOL;
         echo $log_line;
     }
-
     /**
      * 分等级日志
      * @param $content
@@ -500,7 +444,6 @@ class Log {
     public static function warn($content)  { self::write($content, self::LEVEL_WARN); }
     public static function error($content) { self::write($content, self::LEVEL_ERROR); }
     public static function fatal($content) { self::write($content, self::LEVEL_FATAL); }
-
     /**
      * 设置输出日志等级
      * @param $level
@@ -508,4 +451,87 @@ class Log {
     public static function setMinOutputLevel($level) {
         self::$min_output_level = $level;
     }
+}
+Raw
+ video_info.php
+<?php
+/**
+ * Vagex Robot 重生版 之 china mode video proxy
+ * 这个脚本（video_info.php）用来部署在国外，从而让VagexRobot主题可以在国内运行而不需设置代理
+ * 也就是说如果你是在国外vps上面直接用VagexRobot，这个脚本你就用不着了
+ * 没看这个注释就问的一律不答
+ * @author: horsley
+ * @version: 2014-02-16
+ */
+if (isset($_GET['id']) && !empty($_GET['id'])) {
+    $url = 'http://www.youtube.com/watch?v=' . trim($_GET['id']);
+    if ($play_page_body = curl_get($url, $play_page_header)) {
+        $result = array(
+            'watcheduser'   => get_watched_userid($play_page_body),
+            'pageData'      => get_page_title($play_page_body),
+            'machine'       => get_visitor_id($play_page_header),
+            'exactTime'     => get_video_length($play_page_body),
+        );
+        echo json_encode(array('error' => false, 'data' => $result));
+    } else {
+        echo json_encode(array('error' => true, 'info' => 'fetch error'));
+    }
+}
+/**
+ * Preg find page title from html
+ * @param $html
+ * @return mixed
+ */
+function get_page_title($html) {
+    preg_match('/<title>(.*?)<\/title>/', $html, $match);
+    return isset($match[1])?$match[1]:false;
+}
+/**
+ * Preg Youtube visitor id from response cookie
+ * @param $head
+ * @return mixed
+ */
+function get_visitor_id($head) {
+    preg_match('/VISITOR_INFO1_LIVE=(.*?);/', $head, $match);
+    return isset($match[1])?$match[1]:false;
+}
+/**
+ * Preg Youtube video owner id from html
+ * @param $html
+ * @return mixed
+ */
+function get_watched_userid($html) {
+    preg_match('/yt-uix-sessionlink yt-user-videos.*\/user\/(.*?)\//', $html, $match);
+    return isset($match[1])?$match[1]:false;
+}
+/**
+ * Preg Youtube video duration
+ * @param $html
+ * @return mixed
+ */
+function get_video_length($html) {
+    preg_match('/"length_seconds":=\s+(\d+),/', $html, $match);
+    return isset($match[1])?$match[1]:false;
+}
+/**
+ * 简单的get请求
+ * @param $url
+ * @param string $header 可选返回header
+ * @return bool
+ */
+function curl_get($url, &$header = '') {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, array(
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true,
+    ));
+    $response = curl_exec($ch);
+    if (curl_errno($ch)) {
+        return false;
+    }
+    $response = explode("\r\n\r\n", $response, 2);
+    $rsp_body = $response[1]; //返回Body
+    $header = $response[0];
+    curl_close($ch);
+    return $rsp_body;
 }
